@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hackathon Mackenzie 2026 — Grupo Petrópolis</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #f2f1ee;
+  --white:  #ffffff;
+  --ink:    #16151a;
+  --ink2:   #44424f;
+  --ink3:   #9e9baa;
+  --line:   #dddad4;
+  --purple: #5b21b6;
+  --purple-lt: #ede8fb;
+}
+
+body {
+  background: var(--bg);
+  font-family: 'DM Mono', monospace;
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.container {
+  width: 100%;
+  max-width: 680px;
+}
+
+/* ── HEADER ── */
+.eyebrow {
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 12px;
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--ink3);
+  margin-bottom: 48px;
+  line-height: 1.6;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 2px;
+  background: var(--ink);
+  margin-bottom: 40px;
+  border-radius: 99px;
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ── CARDS ── */
+.cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 48px; }
+
+.card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .2s, transform .15s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+}
+.card.e01::before { background: var(--purple); }
+.card.e03::before { background: #1a4fd6; }
+
+.card:hover {
+  border-color: var(--purple);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(91,33,182,0.08);
+}
+.card.e03:hover { border-color: #1a4fd6; box-shadow: 0 8px 24px rgba(26,79,214,0.08); }
+
+.card-left {}
+.card-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-num .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.e01 .dot { background: var(--purple); }
+.e03 .dot { background: #1a4fd6; }
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.card-desc {
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.card-arrow {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background .2s, border-color .2s;
+}
+.card:hover .card-arrow { background: var(--purple); border-color: var(--purple); }
+.card.e03:hover .card-arrow { background: #1a4fd6; border-color: #1a4fd6; }
+.card-arrow svg { width: 14px; height: 14px; color: var(--ink3); transition: color .2s; }
+.card:hover .card-arrow svg { color: #fff; }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--ink3);
+  line-height: 1.8;
+}
+.footer strong { color: var(--ink2); font-weight: 500; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.container { animation: fadeUp .4s ease; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="eyebrow">Hackathon Mackenzie 2026</div>
+  <div class="title">Desafio 1<br>GRUPO PETRÓPOLIS + MICROSOFT</div>
+  <div class="subtitle">Como Medir Resultados Financeiros<br>em Projetos de Inovação</div>
+
+  <div class="divider"></div>
+
+  <div class="section-label"></div>
+
+  <div class="cards">
+
+    <!-- ✏️ href aponta para MensPrio.html -->
+    <a class="card e01" href="MensPrio.html">
+      <div class="card-left">
+        <div class="card-title">Modelo de Mensuração e Priorização</div>
+        <div class="card-desc">Dashboard · Scoreboard · Dados dos Projetos<br>Métricas financeiras e não financeiras · Fórmulas</div>
+      </div>
+      <div class="card-arrow">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- ✏️ href aponta para BMC.html -->
+    <a class="card e03" href="BMC.html">
+      <div class="card-left">
+        <div class="card-title">Business Model Canvas</div>
+        <div class="card-desc">Proposta de valor · Segmentos · Atividades-chave<br>Recursos · Custos e benefícios esperados</div>
+      </div>
+      <div class="card-arrow">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <strong>Universidade Presbiteriana Mackenzie</strong><br>
+    Desafio 1 · 2026
+  </div>
+
+</div>
+
+</body>
+</html>

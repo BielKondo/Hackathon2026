@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo de Mensuração e Priorização de projetos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f3f3f3;
+  --white:     #ffffff;
+  --ink:       #16151a;
+  --ink2:      #44424f;
+  --ink3:      #8c8a98;
+  --line:      #e0ddd6;
+  --line2:     #ccc9c0;
+  --purple:    #5b21b6;
+  --blue:      #1a4fd6;
+  --amber:     #b97208;
+  --green:     #0a6e45;
+  --red:       #be2424;
+  --radius:    12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 13px; }
+
+.shell { max-width: 1200px; margin: 0 auto; padding: 0 32px 80px; }
+
+.topbar {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 40px 0 24px; border-bottom: 2px solid var(--ink); margin-bottom: 0;
+}
+.tb-title { font-family: sans-serif; font-size: clamp(24px, 3vw, 36px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.tb-title em { font-family: 'Lora', serif; font-style: italic; font-weight: 400; color: var(--purple); }
+.tb-right { text-align: right; }
+
+.tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--line2); margin-bottom: 36px; }
+.tab-btn {
+  padding: 14px 28px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--ink3); background: none; border: none; cursor: pointer;
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+  transition: color .2s, border-color .2s; display: flex; align-items: center; gap: 8px; letter-spacing: -.01em;
+}
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { color: var(--ink); border-bottom-color: var(--purple); }
+.tab-btn .tab-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--line2); color: var(--ink3);
+  font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  transition: background .2s, color .2s;
+}
+.tab-btn.active .tab-num { background: var(--purple); color: #fff; }
+
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.sec-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.sec-tag {
+  font-family: sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase; background: var(--ink); color: #fff; padding: 3px 8px; border-radius: 4px;
+}
+.sec-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.sec-sub { font-family: 'Lora', serif; font-style: italic; font-size: 12px; color: var(--ink2); margin-bottom: 20px; }
+.section-block { margin-bottom: 44px; }
+
+/* ── CHART ── */
+.chart-wrap { background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius); padding: 28px 28px 20px; margin-bottom: 12px; }
+.chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.chart-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.chart-sub { font-size: 10.5px; color: var(--ink2); margin-top: 2px; font-family: 'Lora', serif; font-style: italic; }
+.chart-toggle { display: flex; gap: 6px; }
+.ctbtn {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 6px; border: 1.5px solid var(--line2);
+  background: var(--bg); color: var(--ink3); cursor: pointer; transition: all .2s;
+}
+.ctbtn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.canvas-box { position: relative; height: 300px; }
+.chart-fallback {
+  display: none; height: 300px; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px; color: var(--ink3); font-size: 12px; text-align: center;
+  border: 1.5px dashed var(--line2); border-radius: 8px;
+}
+.chart-legend { display: flex; gap: 20px; flex-wrap: wrap; padding: 14px 0 0; border-top: 1px solid var(--line); margin-top: 16px; }
+.cl-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink2); }
+.cl-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── FORMULAS ── */
+.formula-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 0;
+}
+.formula-card {
+  background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius);
+  padding: 16px 18px; position: relative; overflow: hidden;
+}
+.formula-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.fc-roi::before   { background: var(--purple); }
+.fc-pb::before    { background: var(--blue); }
+.fc-vpl::before   { background: var(--green); }
+.formula-card-label {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.formula-card-label .fc-tag {
+  font-size: 8px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 3px; font-family: 'DM Mono', monospace; font-weight: 500;
+}
+.formula-expr {
+  font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--purple);
+  background: #f5f3ff; border-radius: 6px; padding: 8px 10px;
+  margin-bottom: 8px; line-height: 1.7;
+}
+.fc-roi .formula-expr  { color: var(--purple); background: #f5f3ff; }
+.fc-pb .formula-expr   { color: var(--blue);   background: #eff4ff; }
+.fc-vpl .formula-expr  { color: var(--green);  background: #f0faf5; }
+.formula-note { font-size: 9.5px; color: var(--ink3); line-height: 1.6; }
+.formula-na {
+  font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink3); background: var(--line); border-radius: 4px;
+  padding: 2px 7px; display: inline-block; margin-top: 6px;
+}
+
+/* ── METHOD ── */
+.steps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border: 1.5px solid var(--line2); border-radius: var(--radius); overflow: hidden; }
+.step-card { background: var(--white); padding: 22px 18px; border-right: 1px solid var(--line2); position: relative; }
+.step-card:last-child { border-right: none; }
+.step-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.step-num { width: 26px; height: 26px; border-radius: 50%; color: #fff; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.step-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.step-body { font-size: 10.5px; color: var(--ink2); line-height: 1.65; }
+.formula-box { background: var(--ink); border-radius: var(--radius); padding: 22px 26px; display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap; margin-top: 14px; }
+.fb-lbl { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 8px; }
+.fb-formula { font-family: 'DM Mono', monospace; font-size: 13px; color: #c4b5fd; line-height: 2.1; }
+.fb-note { font-size: 10.5px; color: rgba(255,255,255,.45); line-height: 1.8; max-width: 340px; }
+.fb-note b { color: rgba(255,255,255,.8); font-weight: 500; }
+
+/* ── METRICS TABLES ── */
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.metric-table { background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius); overflow: hidden; }
+.mt-head { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+.mt-icon { font-size: 16px; }
+.mt-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
+.mt-sub { font-size: 10px; color: var(--ink3); margin-left: auto; font-family: 'Lora', serif; font-style: italic; }
+.mt-row { display: grid; grid-template-columns: 110px 1fr 1fr 1fr 1fr; border-bottom: 1px solid var(--line); }
+.mt-row:last-child { border-bottom: none; }
+.mt-row.hdr { background: var(--bg); }
+.mt-cell { padding: 14px 14px; font-size: 10.5px; color: var(--ink2); display: flex; align-items: flex-start; gap: 4px; }
+.mt-cell.hdr { padding: 13px 14px; font-size: 9.5px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--ink); line-height: 1.5; flex-direction: column; gap: 2px; }
+.mt-cell.hdr .hdr-sub { font-size: 8.5px; font-weight: 400; color: var(--ink2); }
+.type-tag { font-size: 8.5px; letter-spacing: .04em; padding: 3px 8px; border-radius: 3px; font-weight: 600; display: inline-block; }
+.tick { color: #0a6e45; font-size: 11px; }
+.ndash { color: var(--ink3); }
+.approx { color: var(--amber); }
+
+/* ── SCOREBOARD ── */
+.sb-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.ss-card { background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius); padding: 18px 20px; }
+.ss-label { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
+.ss-value { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; letter-spacing: -.01em; line-height: 1; margin-bottom: 4px; }
+.ss-sub { font-size: 10px; color: var(--ink3); }
+.sb-table { background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius); overflow: hidden; }
+.sb-thead { display: grid; grid-template-columns: 52px 1fr 200px 88px 88px 88px 88px 130px; padding: 10px 22px; background: var(--bg); border-bottom: 1.5px solid var(--line2); }
+.sb-th { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); display: flex; align-items: center; }
+.sb-tr { display: grid; grid-template-columns: 52px 1fr 200px 88px 88px 88px 88px 130px; padding: 22px 22px; border-bottom: 1px solid var(--line); align-items: center; transition: background .15s; }
+.sb-tr:last-child { border-bottom: none; }
+.sb-tr:hover { background: var(--bg); }
+.sb-rank { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; }
+.sb-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.sb-type { font-size: 9px; color: var(--ink3); display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+.score-cell { display: flex; align-items: center; gap: 10px; }
+.score-track { flex: 1; height: 7px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(.16,1,.3,1); }
+.score-num { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; min-width: 30px; text-align: right; }
+.crit-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.crit-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 400; line-height: 1; }
+.crit-track { width: 52px; height: 3px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.crit-fill { height: 100%; border-radius: 99px; }
+.status-pill { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; font-weight: 600; padding: 5px 12px; border-radius: 99px; font-family: 'DM Mono', monospace; white-space: nowrap; }
+.sb-footer { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 14px 22px; background: var(--bg); border-top: 1px solid var(--line); }
+.sbf-group { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.sbf-badge { font-size: 9px; padding: 3px 10px; border-radius: 99px; font-family: 'DM Mono'; }
+.crit-explain { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 24px; }
+.ce-card { background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
+.ce-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.ce-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.ce-weight { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink3); margin-bottom: 10px; }
+.ce-body { font-size: 10.5px; color: var(--ink2); line-height: 1.65; }
+.ce-note { font-size: 9.5px; color: var(--ink3); margin-top: 8px; font-family: 'Lora', serif; font-style: italic; }
+
+/* ── DADOS DOS PROJETOS ── */
+.proj-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.proj-card {
+  background: var(--white); border: 1.5px solid var(--line2); border-radius: var(--radius);
+  overflow: hidden;
+}
+.proj-card-header {
+  padding: 18px 22px 16px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.proj-card-header-left {}
+.proj-type-chip { font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 3px; font-weight: 600; display: inline-block; margin-bottom: 8px; }
+.proj-name { font-family: sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); margin-bottom: 2px; }
+.proj-subtype { font-size: 10px; color: var(--ink); }
+.proj-score-badge {
+  text-align: center; flex-shrink: 0;
+  padding: 10px 16px; border-radius: 8px;
+}
+.proj-score-num { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; line-height: 1; }
+.proj-score-lbl { font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); margin-top: 3px; }
+
+.proj-card-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 16px; }
+
+.data-section-title {
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink);
+  margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+}
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.data-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.data-item {}
+.data-item-label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin-bottom: 3px; }
+.data-item-value { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.data-item-sub { font-size: 9px; color: var(--ink3); margin-top: 1px; }
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+.neutral  { color: var(--ink); }
+.na-val   { color: var(--ink3); font-size: 12px; font-family: 'DM Mono'; }
+
+.crit-mini-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.crit-mini {
+  background: var(--bg); border-radius: 8px; padding: 10px 8px; text-align: center;
+}
+.crit-mini-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.crit-mini-bar { width: 100%; height: 3px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 5px; }
+.crit-mini-fill { height: 100%; border-radius: 99px; }
+.crit-mini-label { font-size: 8px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+
+@media (max-width: 900px) {
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  .sb-thead, .sb-tr { grid-template-columns: 44px 1fr 160px 72px 72px; }
+  .sb-thead > *:nth-child(n+6), .sb-tr > *:nth-child(n+6) { display: none; }
+  .crit-explain { grid-template-columns: 1fr 1fr; }
+  .sb-summary { grid-template-columns: 1fr 1fr; }
+  .proj-cards { grid-template-columns: 1fr; }
+  .formula-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .shell { padding: 0 16px 60px; }
+  .tab-btn { padding: 12px 14px; font-size: 11px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .sb-summary { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- HEADER -->
+<div class="topbar">
+  <div>
+    <div class="tb-title">Hackathon Mackenzie 2026</div>
+  </div>
+  <div class="tb-right"></div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" id="tab0" onclick="switchTab(0)">
+    <span class="tab-num">1</span> Dashboard
+  </button>
+  <button class="tab-btn" id="tab1" onclick="switchTab(1)">
+    <span class="tab-num">2</span> Scoreboard
+  </button>
+  <button class="tab-btn" id="tab2" onclick="switchTab(2)">
+    <span class="tab-num">3</span> Dados dos Projetos
+  </button>
+</div>
+
+<!-- ══════════════ ABA 1 — DASHBOARD ══════════════ -->
+<div class="screen active" id="screen0">
+
+  <!-- GRÁFICO -->
+  <div class="section-block">
+    <div class="sec-heading">
+      <div class="sec-tag">Gráfico</div>
+      <div class="sec-title">Comparativo Financeiro dos 4 Tipos de Projetos</div>
+    </div>
+    <div class="sec-sub">ROI · Payback · VPL — calculados por tipo de projeto.</div>
+
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Indicadores Financeiros por Projeto</div>
+          <div class="chart-sub">Selecione o indicador que deseja visualizar</div>
+        </div>
+        <div class="chart-toggle">
+          <button class="ctbtn active" onclick="setChart('roi',this)">ROI (%)</button>
+          <button class="ctbtn" onclick="setChart('payback',this)">Payback (meses)</button>
+          <button class="ctbtn" onclick="setChart('vpl',this)">VPL (R$)</button>
+        </div>
+      </div>
+      <div class="canvas-box">
+        <canvas id="mainChart"></canvas>
+      </div>
+      <div class="chart-fallback" id="chartFallback">
+        <div style="font-size:28px">📊</div>
+        <div>Carregando gráfico…</div>
+        <div style="font-size:10px;margin-top:4px">Se persistir, verifique a conexão com a internet</div>
+      </div>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:#5b21b6"></div>Tipo 01 — Automação de Relatórios (Sem Invest.)</div>
+        <div class="cl-item"><div class="cl-dot" style="background:#1a4fd6"></div>Tipo 02 — Roteirização de Entregas (Com Invest.)</div>
+        <div class="cl-item"><div class="cl-dot" style="background:#b97208"></div>Tipo 03 — Parceria Influencer (Fin+Qualit.)</div>
+        <div class="cl-item"><div class="cl-dot" style="background:#0a6e45"></div>Tipo 04 — P&D Embalagem Biodegradável (Exploratório)</div>
+      </div>
+    </div>
+
+    <!-- FÓRMULAS -->
+    <div class="formula-row">
+      <!-- ROI -->
+      <div class="formula-card fc-roi">
+        <div class="formula-card-label">
+          <span style="color:var(--purple)">ROI</span>
+          <span class="fc-tag" style="background:#ede8fb;color:#5b21b6">Retorno sobre Investimento</span>
+        </div>
+        <div class="formula-expr">ROI = (Ganho – Investimento) ÷ Investimento × 100</div>
+        <div class="formula-note">Mede o percentual de retorno gerado em relação ao capital investido. Valores positivos indicam lucro; negativos, prejuízo.</div>
+        <div class="formula-na">N/A para Tipo 01 — sem investimento financeiro direto</div>
+      </div>
+      <!-- PAYBACK -->
+      <div class="formula-card fc-pb">
+        <div class="formula-card-label">
+          <span style="color:var(--blue)">Payback</span>
+          <span class="fc-tag" style="background:#e5ecfc;color:#1a4fd6">Tempo de Retorno</span>
+        </div>
+        <div class="formula-expr">Payback = Investimento ÷ Retorno Mensal</div>
+        <div class="formula-note">Indica em quantos meses o investimento será recuperado. Quanto menor o Payback, mais rápido o projeto se paga.</div>
+        <div class="formula-na">N/A para Tipos 01 e 04 — sem fluxo de caixa definido</div>
+      </div>
+      <!-- VPL -->
+      <div class="formula-card fc-vpl">
+        <div class="formula-card-label">
+          <span style="color:var(--green)">VPL</span>
+          <span class="fc-tag" style="background:#d6f5e9;color:#0a6e45">Valor Presente Líquido</span>
+        </div>
+        <div class="formula-expr">VPL = –Invest. + Σ [ Retorno_n ÷ (1 + r)^n ]<br><span style="font-size:10px;color:var(--green)">n = 1 até 60 meses · r = taxa mensal (12% a.a.)</span></div>
+        <div class="formula-note">Desconta o valor do dinheiro no tempo. VPL positivo = projeto viável; negativo = retorno insuficiente para a taxa exigida.</div>
+        <div class="formula-na">N/A para Tipos 01 e 04 — sem fluxo de caixa projetado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÉTODO -->
+  <div class="section-block">
+    <div class="sec-heading">
+      <div class="sec-tag">Método</div>
+      <div class="sec-title">Como Funciona — Passo a Passo</div>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-accent" style="background:#5b21b6"></div>
+        <div class="step-num" style="background:#5b21b6">1</div>
+        <div class="step-name">Identificar</div>
+        <div class="step-body">Classifica o projeto em um dos 4 perfis (Tipos 01–04) com base em investimento e natureza do retorno esperado.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-accent" style="background:#1a4fd6"></div>
+        <div class="step-num" style="background:#1a4fd6">2</div>
+        <div class="step-name">Mapear</div>
+        <div class="step-body">Seleciona métricas financeiras e não financeiras adequadas ao perfil. Cada tipo tem seu conjunto próprio de indicadores.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-accent" style="background:#b97208"></div>
+        <div class="step-num" style="background:#b97208">3</div>
+        <div class="step-name">Calcular</div>
+        <div class="step-body">Aplica as fórmulas correspondentes: ROI, Saving, VPL, Payback, Proxy de Valor ou Custo por Insight, conforme o tipo.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-accent" style="background:#0a6e45"></div>
+        <div class="step-num" style="background:#0a6e45">4</div>
+        <div class="step-name">Pontuar</div>
+        <div class="step-body">Calcula o Score com 4 critérios ponderados: Impacto (40%), Custo (20%), Risco (20%) e Tempo (20%). Escala 1–5.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-accent" style="background:#16151a"></div>
+        <div class="step-num" style="background:#16151a">5</div>
+        <div class="step-name">Decidir</div>
+        <div class="step-body">Classifica o projeto como <b>Prioritário</b> (≥4,0), <b>Em Análise</b> (2,5–3,9) ou <b>Adiar</b> (&lt;2,5) e recomenda a próxima ação.</div>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div>
+        <div class="fb-lbl">Fórmula do Score de Priorização</div>
+        <div class="fb-formula">
+          Score = (Impacto × 0,40) + ((6 – Custo) × 0,20)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; + ((6 – Risco) × 0,20) + (Tempo × 0,20)
+        </div>
+      </div>
+      <div class="fb-note">
+        <b>Impacto</b> tem peso dobrado por ser o driver central de valor.<br>
+        <b>Custo e Risco</b> são invertidos — quanto menor, melhor (6 – valor).<br>
+        <b>Tempo</b> reflete urgência e janela de oportunidade estratégica.<br>
+        Score máximo: <b>5,0</b> · Escala uniforme de <b>1 a 5</b>.
+      </div>
+    </div>
+  </div>
+
+  <!-- MÉTRICAS -->
+  <div class="section-block">
+    <div class="sec-heading">
+      <div class="sec-tag">Métricas</div>
+      <div class="sec-title">Propostas de Métricas por Tipo</div>
+    </div>
+    <div class="sec-sub">Métricas financeiras (mensuráveis em R$) e não financeiras (qualitativas/estratégicas) mapeadas para cada perfil</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:10px;color:var(--ink3)">
+      <span><span style="color:#0a6e45;font-weight:700">✓ Aplicável</span> — métrica calculada com dados reais</span>
+      <span><span style="color:#b97208;font-weight:700">~ Estimado</span> — calculado com premissas declaradas</span>
+      <span><span style="color:var(--ink2);font-weight:700">— N/A</span> — métrica não aplicável a este tipo</span>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-table">
+        <div class="mt-head"><div class="mt-icon">📊</div><div class="mt-title">Métricas Financeiras</div><div class="mt-sub">mensuráveis em R$</div></div>
+        <div class="mt-row hdr">
+          <div class="mt-cell hdr">Tipo de Projeto</div>
+          <div class="mt-cell hdr">ROI<span class="hdr-sub">Retorno s/ Investimento</span></div>
+          <div class="mt-cell hdr">Payback<span class="hdr-sub">Tempo de retorno</span></div>
+          <div class="mt-cell hdr">VPL<span class="hdr-sub">Valor Presente Líquido</span></div>
+          <div class="mt-cell hdr">Métrica Principal</div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#ede8fb;color:#5b21b6">Tipo 01</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Sem investimento financeiro direto</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Não há capital a recuperar</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Sem fluxo de caixa negativo</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Proxy de Valor</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Horas economizadas × custo/hora × período</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#dbeafe;color:#1a4fd6">Tipo 02</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Calculado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">(Ganho – Invest.) ÷ Invest. × 100</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Exato</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Investimento ÷ Retorno mensal</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Calculado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Fluxo de caixa descontado no tempo</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Saving Anual</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Total economizado ou gerado por ano</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#fef3c7;color:#b97208">Tipo 03</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#b97208;font-weight:700">~ Ajustado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Soma retorno direto + indireto estimado</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#b97208;font-weight:700">~ Projetado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Baseado em conversão futura estimada</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#b97208;font-weight:700">~ Aproximado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Depende de premissas declaradas</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Brand Value</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Valor gerado à marca (alcance, percepção)</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#d1fae5;color:#0a6e45">Tipo 04</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Sem retorno financeiro no curto prazo</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Não há capital a recuperar ainda</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="ndash" style="font-weight:700">— N/A</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Fluxo futuro indefinido nesta fase</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Custo/Insight</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Investimento ÷ nº de aprendizados gerados</span></div>
+        </div>
+      </div>
+      <div class="metric-table">
+        <div class="mt-head"><div class="mt-icon">🧩</div><div class="mt-title">Métricas Não Financeiras</div><div class="mt-sub">qualitativas / estratégicas</div></div>
+        <div class="mt-row hdr">
+          <div class="mt-cell hdr">Tipo de Projeto</div>
+          <div class="mt-cell hdr">Impacto Estratégico<span class="hdr-sub">Alinhamento ao negócio</span></div>
+          <div class="mt-cell hdr">Inovação / Eficiência<span class="hdr-sub">Resultado gerado</span></div>
+          <div class="mt-cell hdr">Risco / Maturidade<span class="hdr-sub">Confiança na entrega</span></div>
+          <div class="mt-cell hdr">Métrica Específica<span class="hdr-sub">Exclusiva do tipo</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#ede8fb;color:#5b21b6">Tipo 01</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Alto</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Melhora processos estratégicos internos</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Produtividade</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">% de aumento de output por hora trabalhada</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Baixo</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Equipe interna, sem dependência externa</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Satisfação da Equipe</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Mede se o projeto melhorou o ambiente de trabalho</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#dbeafe;color:#1a4fd6">Tipo 02</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Médio-Alto</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Reduz custos ou aumenta receita diretamente</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Escalabilidade</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Potencial de expandir para outras áreas/unidades</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Moderado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Depende de fornecedor ou tecnologia externa</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Adoção Interna</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">% de usuários/áreas que usam a solução ativamente</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#fef3c7;color:#b97208">Tipo 03</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Médio</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Impacto difuso — fortalece marca a longo prazo</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Engajamento</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Alcance, curtidas, compartilhamentos, conversões</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Moderado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Resultado depende de fatores externos (mercado)</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Brand Equity</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Valor percebido da marca — influencia preço e lealdade</span></div>
+        </div>
+        <div class="mt-row">
+          <div class="mt-cell"><span class="type-tag" style="background:#d1fae5;color:#0a6e45">Tipo 04</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Impacto Futuro</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Alto potencial estratégico, sem resultado imediato</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ TRL (escala 1–9)</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Maturidade técnica: 1=ideia, 9=produto em mercado</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#be2424;font-weight:700">✓ Alto</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">Incerteza técnica e de mercado elevada</span></div>
+          <div class="mt-cell" style="flex-direction:column;align-items:flex-start;gap:2px"><span style="color:#0a6e45;font-weight:700">✓ Pot. de Mercado</span><span style="font-size:9px;color:var(--ink2);line-height:1.4">TAM estimado × % de captura projetada</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screen0 -->
+
+<!-- ══════════════ ABA 2 — SCOREBOARD ══════════════ -->
+<div class="screen" id="screen1">
+  <div class="sb-summary">
+    <div class="ss-card"><div class="ss-label">Maior Score</div><div class="ss-value" style="color:#5b21b6">4,4</div><div class="ss-sub">Automação de Relatórios — Tipo 01</div></div>
+    <div class="ss-card"><div class="ss-label">Prioritários</div><div class="ss-value" style="color:#0a6e45">2</div><div class="ss-sub">Automação · Roteirização</div></div>
+    <div class="ss-card"><div class="ss-label">Em Análise</div><div class="ss-value" style="color:#b97208">1</div><div class="ss-sub">Parceria Influencer</div></div>
+    <div class="ss-card"><div class="ss-label">Adiar</div><div class="ss-value" style="color:#be2424">1</div><div class="ss-sub">P&D Embalagem Biodegradável</div></div>
+  </div>
+  <div class="sec-heading" style="margin-bottom:6px"><div class="sec-tag">Ranking</div><div class="sec-title">Score e Priorização dos Projetos</div></div>
+  <div class="sec-sub">Ordenados pelo Score.</div>
+  <div class="sb-table">
+    <div class="sb-thead">
+      <div class="sb-th">#</div><div class="sb-th">Projeto</div><div class="sb-th">Score MIRA</div>
+      <div class="sb-th">Impacto</div><div class="sb-th">Custo</div><div class="sb-th">Risco</div>
+      <div class="sb-th">Tempo</div><div class="sb-th">Classificação</div>
+    </div>
+    <div id="sbBody"></div>
+    <div class="sb-footer">
+      <span style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Classificação:</span>
+      <div class="sbf-group">
+        <span class="sbf-badge" style="background:#d1fae5;color:#0a6e45">✓ Prioritário ≥ 4,0</span>
+        <span class="sbf-badge" style="background:#fef3c7;color:#b97208">~ Em Análise 2,5 – 3,9</span>
+        <span class="sbf-badge" style="background:#fee2e2;color:#be2424">✗ Adiar &lt; 2,5</span>
+      </div>
+    </div>
+  </div>
+  <div class="crit-explain">
+    <div class="ce-card"><div class="ce-accent" style="background:#5b21b6"></div><div class="ce-label">Impacto Estratégico</div><div class="ce-weight">Peso: 0,40 (40%)</div><div class="ce-body">Grau de alinhamento com os objetivos do Grupo. Quanto maior o impacto esperado no negócio, maior a nota.</div><div class="ce-note">1 = impacto irrelevante · 5 = impacto crítico</div></div>
+    <div class="ce-card"><div class="ce-accent" style="background:#1a4fd6"></div><div class="ce-label">Custo de Implementação</div><div class="ce-weight">Peso: 0,20 (20%) · Invertido</div><div class="ce-body">Recursos financeiros e humanos necessários. É invertido na fórmula — projeto mais barato recebe pontuação maior.</div><div class="ce-note">1 = muito barato · 5 = muito caro</div></div>
+    <div class="ce-card"><div class="ce-accent" style="background:#be2424"></div><div class="ce-label">Risco do Projeto</div><div class="ce-weight">Peso: 0,20 (20%) · Invertido</div><div class="ce-body">Probabilidade de insucesso técnico, operacional ou de adoção. Também invertido — menor risco, maior pontuação.</div><div class="ce-note">1 = risco baixo · 5 = risco alto</div></div>
+    <div class="ce-card"><div class="ce-accent" style="background:#b97208"></div><div class="ce-label">Tempo / Urgência</div><div class="ce-weight">Peso: 0,20 (20%)</div><div class="ce-body">Janela de oportunidade e urgência de implementação. Projetos com maior urgência recebem nota maior.</div><div class="ce-note">1 = sem urgência · 5 = urgente</div></div>
+  </div>
+</div><!-- /screen1 -->
+
+<!-- ══════════════ ABA 3 — DADOS DOS PROJETOS ══════════════ -->
+<div class="screen" id="screen2">
+  <div class="sec-heading" style="margin-bottom:6px"><div class="sec-tag">Detalhes</div><div class="sec-title">Dados Completos dos Projetos</div></div>
+  <div class="sec-sub">Todos os indicadores financeiros, critérios de priorização e métricas não financeiras de cada projeto</div>
+  <div class="proj-cards" id="projCards"></div>
+</div>
+
+</div><!-- /shell -->
+
+<script>
+/* ══ DADOS DOS PROJETOS ══ */
+const DATA = {
+  projects: [
+    {
+      name: "Automação de Relatórios", type: "Tipo 01", typeLabel: "Sem Investimento",
+      color: "#5b21b6", colorLt: "#ede8fb",
+      impacto: 4, custo: 1, risco: 1, tempo: 4,
+      roi: null, payback: null, vpl: null,
+      // dados extras para a aba de detalhes
+      area: "PMO / Processos",
+      descricao: "Equipe interna dedica 15h/semana para automatizar relatórios manuais de linha de produção.",
+      horasEcon: 10, custoHora: 75, proxyValor: 39000,
+      trl: null, insights: null, tam: null,
+      metricaEspecifica: "Satisfação da Equipe", metricaValor: "Alta",
+    },
+    {
+      name: "Roteirização de Entregas", type: "Tipo 02", typeLabel: "Com Investimento",
+      color: "#1a4fd6", colorLt: "#dbeafe",
+      impacto: 5, custo: 3, risco: 2, tempo: 4,
+      roi: 80.0, payback: 6.7, vpl: -7354,
+      area: "Logística / Operações",
+      descricao: "Investimento em software de roteirização logística que reduz custo de frete em R$ 12.000/mês.",
+      investimento: 80000, ganhoAnual: 144000, retornoMensal: 12000,
+      metricaEspecifica: "Adoção Interna", metricaValor: "85% das rotas",
+    },
+    {
+      name: "Parceria Influencer Lifestyle", type: "Tipo 03", typeLabel: "Fin. + Qualitativo",
+      color: "#b97208", colorLt: "#fef3c7",
+      impacto: 3, custo: 4, risco: 3, tempo: 3,
+      roi: -16.7, payback: 15.0, vpl: -38000,
+      area: "Marketing / Inovação",
+      descricao: "Parceria com influencer de lifestyle para fortalecimento de marca. Retorno direto estimado em R$ 15k, indireto em R$ 35k.",
+      investimento: 60000, ganhoAnual: 50000, retornoMensal: 4000,
+      alcance: 300000, brandValue: 35000,
+      metricaEspecifica: "Brand Equity", metricaValor: "+12% percepção",
+    },
+    {
+      name: "P&D Embalagem Biodegradável", type: "Tipo 04", typeLabel: "Exploratório",
+      color: "#0a6e45", colorLt: "#d1fae5",
+      impacto: 3, custo: 5, risco: 5, tempo: 2,
+      roi: -100, payback: null, vpl: null,
+      area: "Inovação / R&D",
+      descricao: "Pesquisa laboratorial para desenvolvimento de embalagem biodegradável. Sem retorno financeiro imediato.",
+      investimento: 95000, trl: 2, insights: 8, tam: 8000000, captura: 3,
+      metricaEspecifica: "Potencial de Mercado", metricaValor: "R$ 240.000",
+    },
+  ]
+};
+
+/* score auto-calculado */
+DATA.projects.forEach(p => {
+  p.score = +((p.impacto*0.40) + ((6-p.custo)*0.20) + ((6-p.risco)*0.20) + (p.tempo*0.20)).toFixed(1);
+  if      (p.score >= 4.0) { p.status = "Prioritário"; p.statusColor = "#0a6e45"; p.statusBg = "#d1fae5"; }
+  else if (p.score >= 2.5) { p.status = "Em Análise";  p.statusColor = "#b97208"; p.statusBg = "#fef3c7"; }
+  else                     { p.status = "Adiar";        p.statusColor = "#be2424"; p.statusBg = "#fee2e2"; }
+});
+
+const ranked = [...DATA.projects].sort((a,b) => b.score - a.score);
+const fmt = n => Number(n).toLocaleString("pt-BR");
+
+/* ── SCOREBOARD ── */
+function buildScoreboard() {
+  const rankColors = ["#b97208","#8c8a98","#8c8a98","#d0cec8"];
+  const body = document.getElementById("sbBody");
+  body.innerHTML = "";
+  ranked.forEach((p,i) => {
+    const pct = (p.score/5)*100;
+    const row = document.createElement("div");
+    row.className = "sb-tr";
+    row.innerHTML = `
+      <div class="sb-rank" style="color:${rankColors[i]}">${i+1}</div>
+      <div><div class="sb-name">${p.name}</div>
+        <div class="sb-type"><span style="background:${p.colorLt};color:${p.color};padding:1px 7px;border-radius:3px;font-size:8px;font-weight:600">${p.type}</span> ${p.typeLabel}</div>
+      </div>
+      <div class="score-cell"><div class="score-track"><div class="score-fill" style="width:0%;background:${p.color}" data-w="${pct}"></div></div><div class="score-num" style="color:${p.color}">${p.score}</div></div>
+      <div class="crit-cell"><div class="crit-val" style="color:#5b21b6">${p.impacto}</div><div class="crit-track"><div class="crit-fill" style="width:${p.impacto/5*100}%;background:#5b21b6"></div></div></div>
+      <div class="crit-cell"><div class="crit-val" style="color:#1a4fd6">${p.custo}</div><div class="crit-track"><div class="crit-fill" style="width:${p.custo/5*100}%;background:#1a4fd6"></div></div></div>
+      <div class="crit-cell"><div class="crit-val" style="color:#be2424">${p.risco}</div><div class="crit-track"><div class="crit-fill" style="width:${p.risco/5*100}%;background:#be2424"></div></div></div>
+      <div class="crit-cell"><div class="crit-val" style="color:#b97208">${p.tempo}</div><div class="crit-track"><div class="crit-fill" style="width:${p.tempo/5*100}%;background:#b97208"></div></div></div>
+      <div><span class="status-pill" style="background:${p.statusBg};color:${p.statusColor}">${p.status}</span></div>`;
+    body.appendChild(row);
+  });
+  setTimeout(() => { document.querySelectorAll(".score-fill[data-w]").forEach(el => { el.style.width = el.dataset.w+"%"; }); }, 200);
+}
+
+/* ── DADOS DOS PROJETOS ── */
+function buildProjCards() {
+  const container = document.getElementById("projCards");
+  if (container.innerHTML !== "") return; // já construído
+  container.innerHTML = "";
+
+  DATA.projects.forEach(p => {
+    // financeiro
+    let finHTML = "";
+    if (p.type === "Tipo 01") {
+      finHTML = `
+        <div class="data-item"><div class="data-item-label">Tipo de Retorno</div><div class="data-item-value neutral">Proxy de Valor</div><div class="data-item-sub">Não há ROI/Payback/VPL direto</div></div>
+        <div class="data-item"><div class="data-item-label">Proxy de Valor Anual</div><div class="data-item-value positive">R$ ${fmt(p.proxyValor)}</div><div class="data-item-sub">${p.horasEcon}h/sem × R$${p.custoHora}/h × 52 sem.</div></div>
+        <div class="data-item"><div class="data-item-label">ROI</div><div class="data-item-value na-val">N/A</div><div class="data-item-sub">Sem investimento financeiro</div></div>
+        <div class="data-item"><div class="data-item-label">Payback</div><div class="data-item-value na-val">N/A</div><div class="data-item-sub">Sem capital a recuperar</div></div>`;
+    } else if (p.type === "Tipo 02") {
+      finHTML = `
+        <div class="data-item"><div class="data-item-label">Investimento Total</div><div class="data-item-value neutral">R$ ${fmt(p.investimento)}</div></div>
+        <div class="data-item"><div class="data-item-label">Ganho Anual Estimado</div><div class="data-item-value positive">R$ ${fmt(p.ganhoAnual)}</div></div>
+        <div class="data-item"><div class="data-item-label">ROI</div><div class="data-item-value positive">${p.roi}%</div><div class="data-item-sub">(${fmt(p.ganhoAnual)} – ${fmt(p.investimento)}) ÷ ${fmt(p.investimento)}</div></div>
+        <div class="data-item"><div class="data-item-label">Payback</div><div class="data-item-value neutral">${p.payback} meses</div><div class="data-item-sub">${fmt(p.investimento)} ÷ R$${fmt(p.retornoMensal)}/mês</div></div>
+        <div class="data-item"><div class="data-item-label">VPL (60m · 12% a.a.)</div><div class="data-item-value negative">R$ ${fmt(p.vpl)}</div><div class="data-item-sub">Fluxo descontado no tempo</div></div>
+        <div class="data-item"><div class="data-item-label">Retorno Mensal</div><div class="data-item-value positive">R$ ${fmt(p.retornoMensal)}</div></div>`;
+    } else if (p.type === "Tipo 03") {
+      finHTML = `
+        <div class="data-item"><div class="data-item-label">Investimento Total</div><div class="data-item-value neutral">R$ ${fmt(p.investimento)}</div></div>
+        <div class="data-item"><div class="data-item-label">Retorno Mensal Est.</div><div class="data-item-value neutral">R$ ${fmt(p.retornoMensal)}</div></div>
+        <div class="data-item"><div class="data-item-label">ROI Ajustado</div><div class="data-item-value negative">${p.roi}%</div><div class="data-item-sub">Inclui retorno direto + indireto</div></div>
+        <div class="data-item"><div class="data-item-label">Payback Projetado</div><div class="data-item-value neutral">${p.payback} meses</div><div class="data-item-sub">Baseado em conversão estimada</div></div>
+        <div class="data-item"><div class="data-item-label">Brand Value</div><div class="data-item-value positive">R$ ${fmt(p.brandValue)}</div><div class="data-item-sub">Valor gerado à marca</div></div>
+        <div class="data-item"><div class="data-item-label">Alcance Estimado</div><div class="data-item-value neutral">${fmt(p.alcance)} pessoas</div></div>`;
+    } else {
+      finHTML = `
+        <div class="data-item"><div class="data-item-label">Investimento Total</div><div class="data-item-value neutral">R$ ${fmt(p.investimento)}</div></div>
+        <div class="data-item"><div class="data-item-label">TRL Atual</div><div class="data-item-value neutral">${p.trl} / 9</div><div class="data-item-sub">Prova de conceito em andamento</div></div>
+        <div class="data-item"><div class="data-item-label">Custo por Insight</div><div class="data-item-value neutral">R$ ${fmt(Math.round(p.investimento/p.insights))}</div><div class="data-item-sub">R$ ${fmt(p.investimento)} ÷ ${p.insights} insights</div></div>
+        <div class="data-item"><div class="data-item-label">Insights Gerados</div><div class="data-item-value neutral">${p.insights}</div></div>
+        <div class="data-item"><div class="data-item-label">Pot. de Mercado (TAM)</div><div class="data-item-value positive">R$ ${fmt(Math.round(p.tam * p.captura/100))}</div><div class="data-item-sub">R$${fmt(p.tam)} × ${p.captura}% captura</div></div>
+        <div class="data-item"><div class="data-item-label">ROI</div><div class="data-item-value negative">–100%</div><div class="data-item-sub">Sem retorno financeiro direto</div></div>`;
+    }
+
+    const card = document.createElement("div");
+    card.className = "proj-card";
+    card.innerHTML = `
+      <div class="proj-card-header" style="border-left:4px solid ${p.color}">
+        <div class="proj-card-header-left">
+          <span class="proj-type-chip" style="background:${p.colorLt};color:${p.color}">${p.type} · ${p.typeLabel}</span>
+          <div class="proj-name">${p.name}</div>
+          <div class="proj-subtype">${p.area}</div>
+          <div style="font-size:10.5px;color:var(--ink);margin-top:8px;line-height:1.6;max-width:420px">${p.descricao}</div>
+        </div>
+        <div class="proj-score-badge" style="background:${p.colorLt}">
+          <div class="proj-score-num" style="color:${p.color}">${p.score}</div>
+          <div class="proj-score-lbl">Score</div>
+          <div style="margin-top:6px"><span class="status-pill" style="background:${p.statusBg};color:${p.statusColor};font-size:8px">${p.status}</span></div>
+        </div>
+      </div>
+      <div class="proj-card-body">
+        <div>
+          <div class="data-section-title">📊 Indicadores Financeiros</div>
+          <div class="data-grid">${finHTML}</div>
+        </div>
+        <div>
+          <div class="data-section-title">⚖️ Critérios de Priorização</div>
+          <div class="crit-mini-grid">
+            <div class="crit-mini"><div class="crit-mini-val" style="color:#5b21b6">${p.impacto}</div><div class="crit-mini-bar"><div class="crit-mini-fill" style="width:${p.impacto/5*100}%;background:#5b21b6"></div></div><div class="crit-mini-label">Impacto</div></div>
+            <div class="crit-mini"><div class="crit-mini-val" style="color:#1a4fd6">${p.custo}</div><div class="crit-mini-bar"><div class="crit-mini-fill" style="width:${p.custo/5*100}%;background:#1a4fd6"></div></div><div class="crit-mini-label">Custo</div></div>
+            <div class="crit-mini"><div class="crit-mini-val" style="color:#be2424">${p.risco}</div><div class="crit-mini-bar"><div class="crit-mini-fill" style="width:${p.risco/5*100}%;background:#be2424"></div></div><div class="crit-mini-label">Risco</div></div>
+            <div class="crit-mini"><div class="crit-mini-val" style="color:#b97208">${p.tempo}</div><div class="crit-mini-bar"><div class="crit-mini-fill" style="width:${p.tempo/5*100}%;background:#b97208"></div></div><div class="crit-mini-label">Tempo</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="data-section-title">🧩 Métrica Não Financeira Principal</div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-item-label">Indicador</div><div class="data-item-value neutral" style="font-size:13px">${p.metricaEspecifica}</div></div>
+            <div class="data-item"><div class="data-item-label">Resultado</div><div class="data-item-value positive" style="font-size:13px">${p.metricaValor}</div></div>
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+/* ── CHART ── */
+let chart = null;
+let currentMetric = "roi";
+const CHART_DATA = {
+  roi:     { label:"ROI (%)",         values:DATA.projects.map(p=>p.roi??0),     nullFlags:DATA.projects.map(p=>p.roi===null),     fmt:v=>v+"%" },
+  payback: { label:"Payback (meses)", values:DATA.projects.map(p=>p.payback??0), nullFlags:DATA.projects.map(p=>p.payback===null), fmt:v=>v+" m" },
+  vpl:     { label:"VPL (R$)",        values:DATA.projects.map(p=>p.vpl??0),     nullFlags:DATA.projects.map(p=>p.vpl===null),     fmt:v=>"R$ "+Number(v).toLocaleString("pt-BR") },
+};
+
+function buildChart() {
+  const canvas = document.getElementById("mainChart");
+  const fallback = document.getElementById("chartFallback");
+  if (typeof Chart === "undefined") { canvas.style.display="none"; fallback.style.display="flex"; return; }
+  canvas.style.display="block"; fallback.style.display="none";
+  const m = CHART_DATA[currentMetric];
+  const colors  = DATA.projects.map((p,i) => m.nullFlags[i] ? "rgba(200,198,210,0.4)" : p.color+"cc");
+  const borders = DATA.projects.map((p,i) => m.nullFlags[i] ? "#d0cec8" : p.color);
+  if (chart) chart.destroy();
+  chart = new Chart(canvas.getContext("2d"), {
+    type:"bar",
+    data:{ labels:DATA.projects.map(p=>p.name), datasets:[{ label:m.label, data:m.values, backgroundColor:colors, borderColor:borders, borderWidth:2, borderRadius:6, borderSkipped:false }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:ctx=>m.nullFlags[ctx.dataIndex]?"N/A — métrica não aplicável":m.label+": "+m.fmt(ctx.raw) }, backgroundColor:"#16151a", titleFont:{family:"DM Mono",size:12}, bodyFont:{family:"DM Mono",size:11}, padding:12, cornerRadius:8 } },
+      scales:{ x:{grid:{display:false},ticks:{font:{family:"DM Mono",size:11},color:"#44424f"}}, y:{grid:{color:"#e0ddd6"},ticks:{font:{family:"DM Mono",size:10},color:"#8c8a98",callback:v=>currentMetric==="vpl"?"R$ "+Number(v).toLocaleString("pt-BR"):currentMetric==="payback"?v+" m":v+"%"}} }
+    }
+  });
+}
+
+function setChart(metric, btn) {
+  currentMetric = metric;
+  document.querySelectorAll(".ctbtn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  buildChart();
+}
+
+function switchTab(n) {
+  document.querySelectorAll(".screen").forEach((s,i)=>s.classList.toggle("active",i===n));
+  document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===n));
+  if (n===0) buildChart();
+  if (n===1) buildScoreboard();
+  if (n===2) buildProjCards();
+}
+</script>
+
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  onload="buildChart()"
+  onerror="document.getElementById('mainChart').style.display='none';document.getElementById('chartFallback').style.display='flex';">
+</script>
+</body>
+</html>
