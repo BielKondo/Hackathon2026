@@ -27,69 +27,48 @@ html, body {
   font-family: 'DM Mono', monospace;
   color: var(--ink);
 }
-
-body {
-  padding: 24px 28px 36px;
-}
+body { padding: 24px 28px 36px; }
 
 /* ── HEADER ── */
 .header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--ink);
-  margin-bottom: 20px;
-  flex-shrink: 0;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding-bottom: 16px; border-bottom: 2px solid var(--ink); margin-bottom: 20px;
 }
-.h-eyebrow { font-size: clamp(7px,0.7vw,9px); letter-spacing:.18em; text-transform:uppercase; color:var(--purple); margin-bottom:6px; }
+.h-eyebrow { font-size: clamp(7px,.7vw,9px); letter-spacing:.18em; text-transform:uppercase; color:var(--purple); margin-bottom:6px; }
 .h-title { font-family:'Syne',sans-serif; font-size:clamp(18px,2.2vw,28px); font-weight:800; letter-spacing:-.02em; line-height:1.1; }
 .h-title span { color:var(--purple); }
-.h-sub { font-size:clamp(8px,0.75vw,10px); color:var(--ink3); margin-top:4px; }
-.h-badge { display:inline-block; background:var(--ink); color:#fff; font-size:clamp(7px,0.65vw,9px); letter-spacing:.12em; text-transform:uppercase; padding:4px 10px; border-radius:4px; margin-bottom:3px; }
+.h-badge { display:inline-block; background:var(--ink); color:#fff; font-size:clamp(7px,.65vw,9px); letter-spacing:.12em; text-transform:uppercase; padding:4px 10px; border-radius:4px; margin-bottom:3px; }
 .h-right { text-align:right; }
-.h-right-sub { font-size:clamp(8px,0.7vw,9px); color:var(--ink3); }
+.h-right-sub { font-size:clamp(8px,.7vw,9px); color:var(--ink3); }
 
-/* ── OUTER WRAPPER ── */
+/* ══════════════════════════
+   BMC — CSS GRID LAYOUT
+   Colunas: P | A | V | R | S
+   Linhas:  top (blocos) | mid (recursos) | bottom (custos)
+══════════════════════════ */
 .bmc-wrapper {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 1.5px;
+  background: var(--ink);
   border: 1.5px solid var(--ink);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--ink);
-  gap: 1px;
 }
 
-/* ── ROW ── */
-.bmc-row {
-  display: flex;
-  gap: 1px;
-}
-/* row 1 stretches so all blocks match the tallest (value prop) */
-.bmc-row.top { align-items: stretch; }
-/* row 2 shrinks to content */
-.bmc-row.mid { align-items: stretch; }
-.bmc-row.bottom { align-items: stretch; }
+/* empty cell row 2 cols 4-5 */
+.grid-empty { background: var(--white); grid-column: 4 / 6; grid-row: 2; }
 
 /* ── BLOCK ── */
 .block {
   background: var(--white);
-  padding: clamp(10px,1.2vw,18px) clamp(10px,1.2vw,18px) clamp(22px,2.2vw,32px);
+  padding: clamp(12px,1.2vw,18px) clamp(12px,1.2vw,18px) clamp(28px,2.5vw,38px);
   position: relative;
-  overflow: hidden;
-  flex: 1;
   min-width: 0;
 }
 
-/* value prop takes more horizontal space in row 1 */
-.b-value { flex: 1.4; }
-
-/* resources + channels each take half of row 2 */
-.b-resources { flex: 1; }
-.b-channels  { flex: 1; }
-
-/* accent stripe */
+/* accent stripe top */
 .block::before {
   content:''; position:absolute; top:0; left:0; right:0; height:3px;
 }
@@ -98,81 +77,86 @@ body {
 .b-activities::before { background: var(--purple); }
 .b-value::before      { background: var(--purple); }
 .b-relations::before,
-.b-channels::before,
 .b-segments::before   { background: var(--blue); }
 .bc-costs::before     { background: var(--red); }
 .bc-revenue::before   { background: var(--green); }
 
+/* ── GRID PLACEMENTS ── */
+.b-partners   { grid-column: 1; grid-row: 1; }
+.b-activities { grid-column: 2; grid-row: 1; }
+.b-value      { grid-column: 3; grid-row: 1 / 3; }  /* spans rows 1 AND 2 */
+.b-relations  { grid-column: 4; grid-row: 1 / 3; }  /* spans rows 1 AND 2 */
+.b-segments   { grid-column: 5; grid-row: 1 / 3; }  /* spans rows 1 AND 2 */
+.b-resources  { grid-column: 1 / 3; grid-row: 2; }  /* spans cols 1–2 */
+.bc-costs     { grid-column: 1 / 4; grid-row: 3; }  /* spans cols 1–3 */
+.bc-revenue   { grid-column: 4 / 6; grid-row: 3; }  /* spans cols 4–5 */
+
 /* ── BLOCK HEADER ── */
-.block-label {
-  display: flex; align-items: center; gap: 6px;
-  margin-bottom: clamp(8px,1vw,12px);
-}
+.block-label { display:flex; align-items:center; gap:6px; margin-bottom:clamp(8px,1vw,12px); }
 .block-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .b-partners .block-dot,
 .b-resources .block-dot  { background: var(--slate); }
 .b-activities .block-dot { background: var(--purple); }
 .b-value .block-dot      { background: var(--purple); }
 .b-relations .block-dot,
-.b-channels .block-dot,
 .b-segments .block-dot   { background: var(--blue); }
 .bc-costs .block-dot     { background: var(--red); }
 .bc-revenue .block-dot   { background: var(--green); }
 
 .block-title {
-  font-family:sans-serif;
-  font-size: clamp(13px,0.75vw,10px);
-  font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  font-family: sans-serif;
+  font-size: clamp(9px,.75vw,11px);
+  font-weight: 800; letter-spacing:.06em; text-transform:uppercase;
 }
 .b-value .block-title { color: var(--purple); }
 
 /* ── BLOCK NUMBER ── */
 .block-num {
   font-family:'Syne',sans-serif;
-  font-size: clamp(20px,2vw,30px);
-  font-weight:800;
-  color: var(--ink3);
+  font-size: clamp(18px,2vw,28px);
+  font-weight: 800;
+  color: var(--line);
   position: absolute;
-  bottom: clamp(6px,0.8vw,10px);
+  bottom: clamp(4px,.6vw,8px);
   right: clamp(8px,1vw,14px);
-  line-height:1;
-  letter-spacing:-.04em;
-  /* never overlaps text — stays in bottom-right corner */
+  line-height: 1;
+  letter-spacing: -.04em;
   pointer-events: none;
 }
 
 /* ── LIST ── */
-.block ul { list-style:none; display:flex; flex-direction:column; gap: clamp(8px,0.5vw,7px); }
+.block ul { list-style:none; display:flex; flex-direction:column; gap:clamp(5px,.5vw,8px); }
 .block ul li {
-  font-size: clamp(13.5px,0.75vw,11px);
+  font-size: clamp(11px,.75vw,12px);
   color: var(--ink);
-  line-height:1.5;
-  padding-left:12px;
-  position:relative;
+  line-height: 1.5;
+  padding-left: 12px;
+  position: relative;
 }
 .block ul li::before {
   content:'·'; position:absolute; left:1px;
-  color:var(--ink); font-size:20px; line-height:1;
+  color:var(--ink); font-size:18px; line-height:1;
 }
-.b-value ul li { font-size: clamp(13px,0.8vw,11.5px); }
-.b-value ul li strong { font-weight:600; color:var(--ink); }
+.b-value ul li { font-size: clamp(11px,.8vw,12.5px); }
+.b-value ul li strong { font-weight:600; }
 
-/* horizontal lists for wide blocks */
-.b-resources ul,
-.b-channels ul,
+/* resources spans 2 cols — items in a row */
+.b-resources ul {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px 32px;
+}
+.b-resources ul li { flex: 1 1 28%; }
+
+/* bottom spans — items in a row */
 .bc-costs ul,
 .bc-revenue ul {
   flex-direction: row;
   flex-wrap: wrap;
-  gap: clamp(4px,0.5vw,7px) clamp(12px,2vw,28px);
+  gap: 6px 28px;
 }
-.b-resources ul li,
-.b-channels ul li   { flex: 1 1 38%; }
-.bc-costs ul li,
-.bc-revenue ul li   { flex: 1 1 38%; }
-
-/* bottom row fixed height */
-.bmc-row.bottom { min-height: clamp(90px,12vh,140px); }
+.bc-costs ul li   { flex: 1 1 40%; }
+.bc-revenue ul li { flex: 1 1 40%; }
 
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 .bmc-wrapper { animation: fadeIn .35s ease; }
@@ -192,116 +176,109 @@ body {
   </div>
 </div>
 
-<!-- BMC -->
+<!-- BMC GRID -->
 <div class="bmc-wrapper">
 
-  <!-- ROW 1: Parceiros | Atividades | Valor | Relacionamento | Segmentos -->
-  <div class="bmc-row top">
+  <!-- 1. PARCEIROS-CHAVE -->
+  <div class="block b-partners">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Parceiros-chave</div></div>
+    <ul>
+      <li>PMO do Grupo Petrópolis</li>
+      <li>Controladoria e Finanças</li>
+      <li>Times de Inovação internos</li>
+      <li>Áreas de negócio (Mktg, Logística, P&D)</li>
+      <li>Liderança estratégica (C-level)</li>
+    </ul>
+    <div class="block-num">8</div>
+  </div>
 
-    <div class="block b-partners">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Parceiros-chave</div></div>
-      <ul>
-        <li>PMO do Grupo Petrópolis</li>
-        <li>Controladoria e Finanças</li>
-        <li>Times de Inovação internos</li>
-        <li>Áreas de negócio (Mktg, Logística, P&D)</li>
-        <li>Liderança estratégica (C-level)</li>
-      </ul>
-      <div class="block-num">8</div>
-    </div>
+  <!-- 2. ATIVIDADES-CHAVE -->
+  <div class="block b-activities">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Atividades-chave</div></div>
+    <ul>
+      <li>Classificação nos 4 perfis de projeto</li>
+      <li>Cálculo de ROI, VPL e Payback</li>
+      <li>Aplicação de métricas não financeiras (TRL, Brand Value)</li>
+      <li>Geração do Score de Priorização</li>
+      <li>Comunicação via dashboard interativo</li>
+    </ul>
+    <div class="block-num">7</div>
+  </div>
 
-    <div class="block b-activities">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Atividades-chave</div></div>
-      <ul>
-        <li>Classificação nos 4 perfis de projeto</li>
-        <li>Cálculo de ROI, VPL e Payback</li>
-        <li>Aplicação de métricas não financeiras (TRL, Brand Value)</li>
-        <li>Geração do Score de Priorização</li>
-        <li>Comunicação via dashboard interativo</li>
-      </ul>
-      <div class="block-num">7</div>
-    </div>
+  <!-- 3. PROPOSTA DE VALOR — spans 2 rows -->
+  <div class="block b-value">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Proposta de Valor</div></div>
+    <ul>
+      <li>Método padronizado para medir resultados de inovação em <strong>qualquer tipo de projeto</strong></li>
+      <li>Comparação justa entre projetos de perfis diferentes (sem vs. com investimento)</li>
+      <li>Decisão de priorização baseada em dados, não em intuição</li>
+      <li>Traduz impactos qualitativos em valores financeiros estimados</li>
+      <li>Linguagem financeira acessível para equipes técnicas e de negócio</li>
+      <li>Ferramenta rápida, independente de sistemas externos</li>
+    </ul>
+    <div class="block-num">2</div>
+  </div>
 
-    <div class="block b-value">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Proposta de Valor</div></div>
-      <ul>
-        <li>Método padronizado para medir resultados de inovação em <strong>qualquer tipo de projeto</strong></li>
-        <li>Comparação justa entre projetos de perfis diferentes (sem vs. com investimento)</li>
-        <li>Decisão de priorização baseada em dados, não em intuição</li>
-        <li>Traduz impactos qualitativos em valores financeiros estimados</li>
-        <li>Linguagem financeira acessível para equipes técnicas e de negócio</li>
-        <li>Ferramenta rápida, independente de sistemas externos</li>
-      </ul>
-      <div class="block-num">2</div>
-    </div>
+  <!-- 4. RELACIONAMENTO -->
+  <div class="block b-relations">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Relacionamento</div></div>
+    <ul>
+      <li>Dashboard interativo por projeto</li>
+      <li>Scoreboard de priorização</li>
+      <li>Relatórios periódicos ao PMO</li>
+      <li>Capacitação das equipes no método</li>
+    </ul>
+    <div class="block-num">4</div>
+  </div>
 
-    <div class="block b-relations">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Relacionamento</div></div>
-      <ul>
-        <li>Dashboard interativo por projeto</li>
-        <li>Scoreboard de priorização</li>
-        <li>Relatórios periódicos ao PMO</li>
-        <li>Capacitação das equipes no método</li>
-      </ul>
-      <div class="block-num">4</div>
-    </div>
+  <!-- 5. SEGMENTOS -->
+  <div class="block b-segments">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Segmentos Atendidos</div></div>
+    <ul>
+      <li>PMO — gestão do portfólio</li>
+      <li>Controladoria — validação de indicadores</li>
+      <li>Times de Inovação — submissão de projetos</li>
+      <li>Diretoria — decisão estratégica</li>
+    </ul>
+    <div class="block-num">1</div>
+  </div>
 
-    <div class="block b-segments">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Segmentos Atendidos</div></div>
-      <ul>
-        <li>PMO — gestão do portfólio</li>
-        <li>Controladoria — validação de indicadores</li>
-        <li>Times de Inovação — submissão de projetos</li>
-        <li>Diretoria — decisão estratégica</li>
-      </ul>
-      <div class="block-num">1</div>
-    </div>
+  <!-- 6. RECURSOS-CHAVE — spans cols 1-2, row 2 -->
+  <div class="block b-resources">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Recursos-chave</div></div>
+    <ul>
+      <li>Metodologia MIRA (lógica + fórmulas)</li>
+      <li>Dashboard HTML interativo</li>
+      <li>Base de dados dos projetos do GP</li>
+      <li>Equipe de engenharia para implementação</li>
+      <li>Dados históricos de ROI e produtividade</li>
+    </ul>
+    <div class="block-num">6</div>
+  </div>
 
-  </div><!-- /row1 -->
+  <!-- 9. ESTRUTURA DE CUSTOS — spans cols 1-3, row 3 -->
+  <div class="block bc-costs">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Estrutura de Custos</div></div>
+    <ul>
+      <li>Horas de implementação interna (equipe de engenharia)</li>
+      <li>Treinamento e capacitação das equipes no método</li>
+      <li>Manutenção e atualização da ferramenta</li>
+      <li>Coleta e curadoria de dados dos projetos</li>
+    </ul>
+    <div class="block-num">9</div>
+  </div>
 
-  <!-- ROW 2: Recursos | Canais -->
-  <div class="bmc-row mid">
-
-    <div class="block b-resources">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Recursos-chave</div></div>
-      <ul>
-        <li>Metodologia MIRA (lógica + fórmulas)</li>
-        <li>Dashboard HTML interativo</li>
-        <li>Base de dados dos projetos do GP</li>
-        <li>Equipe de engenharia para implementação</li>
-        <li>Dados históricos de ROI e produtividade</li>
-      </ul>
-      <div class="block-num">6</div>
-    </div>
-
-  </div><!-- /row2 -->
-
-  <!-- ROW 3 BOTTOM: Custos | Benefícios -->
-  <div class="bmc-row bottom">
-
-    <div class="block bc-costs">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Estrutura de Custos</div></div>
-      <ul>
-        <li>Horas de implementação interna (equipe de engenharia)</li>
-        <li>Treinamento e capacitação das equipes no método</li>
-        <li>Manutenção e atualização da ferramenta</li>
-        <li>Coleta e curadoria de dados dos projetos</li>
-      </ul>
-      <div class="block-num">9</div>
-    </div>
-
-    <div class="block bc-revenue">
-      <div class="block-label"><div class="block-dot"></div><div class="block-title">Benefícios Esperados</div></div>
-      <ul>
-        <li>Redução de projetos mal priorizados no portfólio</li>
-        <li>Aumento do ROI médio do portfólio de inovação</li>
-        <li>Transparência e alinhamento estratégico entre áreas</li>
-        <li>Saving de tempo nas decisões de portfólio (PMO)</li>
-      </ul>
-      <div class="block-num">5</div>
-    </div>
-
-  </div><!-- /bottom -->
+  <!-- 5. BENEFÍCIOS ESPERADOS — spans cols 4-5, row 3 -->
+  <div class="block bc-revenue">
+    <div class="block-label"><div class="block-dot"></div><div class="block-title">Benefícios Esperados</div></div>
+    <ul>
+      <li>Redução de projetos mal priorizados no portfólio</li>
+      <li>Aumento do ROI médio do portfólio de inovação</li>
+      <li>Transparência e alinhamento estratégico entre áreas</li>
+      <li>Saving de tempo nas decisões de portfólio (PMO)</li>
+    </ul>
+    <div class="block-num">5</div>
+  </div>
 
 </div><!-- /bmc-wrapper -->
 
